@@ -8,6 +8,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const onSubmit = async () => {
     setError('');
@@ -16,42 +17,50 @@ export default function LoginScreen() {
         setError('Email and password are required.');
         return;
       }
-      await login(email.trim(), password.trim());
+      setBusy(true);
+      await login({ email: email.trim(), password: password.trim() });
     } catch (e) {
-      setError(e.message || 'Login failed');
+      setError(e?.message || 'Login failed');
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Reading Tracker</Text>
+      <Text style={styles.title}>Sign in</Text>
+
+      {!!error && <Text style={styles.error}>{error}</Text>}
+
       <TextInput
-        placeholder="Email"
-        placeholderTextColor="#999"
         style={styles.input}
-        keyboardType="email-address"
+        placeholder="Email"
+        placeholderTextColor="#aaa"
         autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        editable={!busy}
       />
-      <View style={styles.row}>
+
+      <View style={[styles.row, { marginBottom: 12 }]}>
         <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
           placeholder="Password"
-          placeholderTextColor="#999"
-          style={[styles.input, { flex: 1 }]}
+          placeholderTextColor="#aaa"
           secureTextEntry={!show}
           value={password}
           onChangeText={setPassword}
+          editable={!busy}
         />
-        <TouchableOpacity onPress={() => setShow(s => !s)} style={styles.eye}>
-          <Text>{show ? '🙈' : '👁️'}</Text>
+        <TouchableOpacity onPress={() => setShow(!show)} style={styles.eye} disabled={busy}>
+          <Text style={{ color: 'white' }}>{show ? '🙈' : '👁️'}</Text>
         </TouchableOpacity>
       </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <TouchableOpacity style={styles.btn} onPress={onSubmit}>
-        <Text style={styles.btnText}>Login</Text>
+      <TouchableOpacity style={styles.btn} onPress={onSubmit} disabled={busy}>
+        <Text style={styles.btnText}>{busy ? 'Signing in...' : 'Login'}</Text>
       </TouchableOpacity>
     </View>
   );

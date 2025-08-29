@@ -12,9 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -22,6 +20,10 @@
       "package": "com.k2p.readingtracker",
       "versionCode": 1,
       "permissions": []
+    },
+    "extra": {
+      "apiBaseUrl": "https://metre-reading.onrender.com",
+      "apiPrefix": "api/v1"
     }
   }
 }

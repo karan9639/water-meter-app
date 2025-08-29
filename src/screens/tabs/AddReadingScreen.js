@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { addReading } from '../../storage/storage';
+import { saveReadingApi } from '../../api/readings';
 
 function clampToNonNegative(n) {
   const v = Number.isFinite(n) ? n : 0;
@@ -10,6 +10,7 @@ function clampToNonNegative(n) {
 export default function AddReadingScreen({ onAdded }) {
   const [treated, setTreated] = useState('0');
   const [wasted, setWasted] = useState('0');
+  const [busy, setBusy] = useState(false);
 
   const plus = (which) => {
     if (which === 'treated') setTreated(String(clampToNonNegative(parseFloat(treated || '0') + 1)));
@@ -21,53 +22,68 @@ export default function AddReadingScreen({ onAdded }) {
     else setWasted(String(clampToNonNegative(parseFloat(wasted || '0') - 1)));
   };
 
-  const submit = async () => {
+  const onSubmit = async () => {
     const t = parseFloat(treated);
     const w = parseFloat(wasted);
-    if (isNaN(t) || isNaN(w)) {
-      Alert.alert('Validation', 'Please enter numeric values.');
+    if (Number.isNaN(t) || Number.isNaN(w)) {
+      Alert.alert('Error', 'Both values must be numbers.');
       return;
     }
     if (t < 0 || w < 0) {
-      Alert.alert('Validation', 'Values cannot be negative.');
+      Alert.alert('Error', 'Values cannot be negative.');
       return;
     }
-    const now = new Date();
-    const ts = now.toISOString();
-    await addReading({ treated: t, wasted: w, timestamp: ts });
-    setTreated('0');
-    setWasted('0');
-    if (onAdded) onAdded();
+    setBusy(true);
+    try {
+      await saveReadingApi({ treated: t, wasted: w });
+      Alert.alert('Success', 'Reading saved to server.');
+      setTreated('0'); setWasted('0');
+      onAdded && onAdded();
+    } catch (e) {
+      Alert.alert('Save failed', e?.message || 'Unknown error');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Treated Water Unit</Text>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.btn} onPress={() => minus('treated')}><Text style={styles.btnText}>–</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={() => minus('treated')} disabled={busy}>
+          <Text style={styles.btnText}>-</Text>
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
-          keyboardType="decimal-pad"
+          keyboardType="numeric"
           value={treated}
           onChangeText={setTreated}
+          editable={!busy}
         />
-        <TouchableOpacity style={styles.btn} onPress={() => plus('treated')}><Text style={styles.btnText}>+</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={() => plus('treated')} disabled={busy}>
+          <Text style={styles.btnText}>+</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={[styles.label, { marginTop: 16 }]}>Wasted Water Unit</Text>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.btn} onPress={() => minus('wasted')}><Text style={styles.btnText}>–</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={() => minus('wasted')} disabled={busy}>
+          <Text style={styles.btnText}>-</Text>
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
-          keyboardType="decimal-pad"
+          keyboardType="numeric"
           value={wasted}
           onChangeText={setWasted}
+          editable={!busy}
         />
-        <TouchableOpacity style={styles.btn} onPress={() => plus('wasted')}><Text style={styles.btnText}>+</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={() => plus('wasted')} disabled={busy}>
+          <Text style={styles.btnText}>+</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.submit} onPress={submit}>
-        <Text style={styles.submitText}>Submit</Text>
+      <TouchableOpacity style={styles.submit} onPress={onSubmit} disabled={busy}>
+        <Text style={styles.submitText}>{busy ? 'Saving...' : 'Submit Reading'}</Text>
       </TouchableOpacity>
     </View>
   );

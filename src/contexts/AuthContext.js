@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loginUser, logoutUser } from '../api/auth';
 
 const AuthContext = createContext(null);
 
@@ -10,7 +11,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     (async () => {
       try {
-        const t = await AsyncStorage.getItem('auth_token');
+        // Keep backwards compatibility with previous key
+        const t = (await AsyncStorage.getItem('water_app_auth_token')) || (await AsyncStorage.getItem('auth_token'));
         if (t) setToken(t);
       } catch (e) {
         console.warn('Failed to load token', e);
@@ -20,15 +22,15 @@ export const AuthProvider = ({ children }) => {
     })();
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    if (!email || !password) throw new Error('Email and password required');
-    const demo = 'demo_token';
-    await AsyncStorage.setItem('auth_token', demo);
-    setToken(demo);
+  const login = useCallback(async ({ email, password }) => {
+    const res = await loginUser({ email, password });
+    const t = (await AsyncStorage.getItem('water_app_auth_token')) || (await AsyncStorage.getItem('auth_token'));
+    if (t) setToken(t);
+    return res;
   }, []);
 
   const logout = useCallback(async () => {
-    await AsyncStorage.removeItem('auth_token');
+    await logoutUser();
     setToken(null);
   }, []);
 
