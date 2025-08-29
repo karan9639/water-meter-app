@@ -11,6 +11,11 @@ dist/
 build/
 android/app/build/
 ios/build/
+android/.gradle/
+android/.idea/
+android/.settings/
+android/.classpath
+android/.project
 
 # Expo
 .expo/
@@ -20,6 +25,7 @@ ios/build/
 *.keystore
 *.gradle
 *.iml
+*.hprof
 
 # OS files
 .DS_Store
@@ -37,3 +43,23 @@ Thumbs.db
 
 # Misc
 coverage/
+*.tgz
+
+# Metro bundler cache
+.cache/
+metro-cache/
+
+# Test output
+jest-test-results.json
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# CocoaPods
+ios/Pods/
+Podfile.lock
+
+# Android local properties
+android/local.properties
